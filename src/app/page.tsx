@@ -1,24 +1,19 @@
-import { auth } from "@/auth"
-import { CoursesList } from "@/components/CoursesList"
-import { SignInButton } from "@/components/SignInButton"
+import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
+import { SignInButton } from '@/components/SignInButton'
 
-export default async function Home() {
+export default async function Page() {
   const session = await auth()
 
-  return (
-    <div className="font-sans min-h-screen p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">Google Classroom Dashboard</h1>
-        
-        {session ? (
-          <CoursesList />
-        ) : (
-          <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <p className="text-lg mb-6">Inicia sesión para ver tus cursos de Google Classroom</p>
-            <SignInButton />
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  if (!session) {
+    return (
+      <main className="container mx-auto p-8">
+        <h1 className="text-3xl font-bold mb-8">Google Classroom Dashboard</h1>
+        <SignInButton />
+      </main>
+    )
+  }
+
+  // Si el usuario está autenticado, redirigir al dashboard
+  return redirect('/dashboard')
 }
