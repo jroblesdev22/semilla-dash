@@ -274,12 +274,24 @@ export function DataTable({
   courses,
   selectedCourseId,
   onCourseChange,
+  professors,
+  selectedProfessor,
+  onProfessorChange,
+  celulas,
+  selectedCelula,
+  onCelulaChange,
 }: {
   data: z.infer<typeof schema>[]
   onRefresh?: () => void
   courses?: Array<{id: string; name: string}>
   selectedCourseId?: string
   onCourseChange?: (courseId: string | undefined) => void
+  professors?: Array<{id: string; name: string}>
+  selectedProfessor?: string
+  onProfessorChange?: (professorId: string | undefined) => void
+  celulas?: Array<{id: string; name: string}>
+  selectedCelula?: string
+  onCelulaChange?: (celulaId: string | undefined) => void
 }) {
   const [data, setData] = React.useState(() => initialData)
   
@@ -380,7 +392,7 @@ export function DataTable({
           </TabsTrigger>
           <TabsTrigger value="focus-documents">Reportes</TabsTrigger>
         </TabsList>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Filtro por Cursos */}
           {courses && courses.length > 0 && (
             <Select value={selectedCourseId || "ALL"} onValueChange={(value) => onCourseChange?.(value === "ALL" ? undefined : value)}>
@@ -392,6 +404,40 @@ export function DataTable({
                 {courses.map((course) => (
                   <SelectItem key={course.id} value={course.id}>
                     <span className="truncate">{course.name}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          
+          {/* Filtro por Profesor */}
+          {professors && professors.length > 0 && (
+            <Select value={selectedProfessor || "ALL"} onValueChange={(value) => onProfessorChange?.(value === "ALL" ? undefined : value)}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filtrar por profesor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos los profesores</SelectItem>
+                {professors.map((professor) => (
+                  <SelectItem key={professor.id} value={professor.id}>
+                    <span className="truncate">{professor.name}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          
+          {/* Filtro por Célula */}
+          {celulas && celulas.length > 0 && (
+            <Select value={selectedCelula || "ALL"} onValueChange={(value) => onCelulaChange?.(value === "ALL" ? undefined : value)}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filtrar por célula" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todas las células</SelectItem>
+                {celulas.map((celula) => (
+                  <SelectItem key={celula.id} value={celula.id}>
+                    <span className="truncate">{celula.name}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
