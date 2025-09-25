@@ -41,7 +41,12 @@ export async function GET(request: Request) {
     })
 
     let students: StudentStats[] = []
-    let courses: any[] = []
+    
+    // Always get all courses first
+    const coursesResult = await classroom.courses.list({
+      pageSize: 50,
+    })
+    const courses = coursesResult.data.courses || []
 
     if (courseId) {
       // Get students for specific course
@@ -59,12 +64,6 @@ export async function GET(request: Request) {
         }
       }
     } else {
-      // Get all courses first
-      const coursesResult = await classroom.courses.list({
-        pageSize: 50,
-      })
-      courses = coursesResult.data.courses || []
-
       // Get students for all courses
       for (const course of courses) {
         if (course.id) {
@@ -89,7 +88,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ 
       students,
-      courses: courseId ? [] : courses
+      courses // Always return courses
     })
   } catch (error) {
     console.error('Error fetching students:', error)

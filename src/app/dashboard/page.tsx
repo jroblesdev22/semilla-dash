@@ -10,7 +10,6 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { useStudents } from "@/hooks/use-students"
-import { CourseSelector } from "@/components/course-selector"
 import { Loader2, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -36,12 +35,8 @@ export default function Page() {
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <SectionCards />
-              <div className="px-4 lg:px-6 space-y-6">
+              <div className="px-4 lg:px-6">
                 <ChartAreaInteractive />
-                <CourseSelector 
-                  selectedCourseId={selectedCourseId}
-                  onCourseChange={setSelectedCourseId}
-                />
               </div>
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -63,7 +58,13 @@ export default function Page() {
                   </Alert>
                 </div>
               ) : (
-                <DataTable data={students} onRefresh={refetch} />
+                <DataTable 
+                  data={students} 
+                  onRefresh={refetch}
+                  courses={courses}
+                  selectedCourseId={selectedCourseId}
+                  onCourseChange={setSelectedCourseId}
+                />
               )}
             </div>
           </div>

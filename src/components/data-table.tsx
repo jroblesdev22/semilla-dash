@@ -276,9 +276,15 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
 export function DataTable({
   data: initialData,
   onRefresh,
+  courses,
+  selectedCourseId,
+  onCourseChange,
 }: {
   data: z.infer<typeof schema>[]
   onRefresh?: () => void
+  courses?: any[]
+  selectedCourseId?: string
+  onCourseChange?: (courseId: string | undefined) => void
 }) {
   const [data, setData] = React.useState(() => initialData)
   
@@ -380,39 +386,22 @@ export function DataTable({
           <TabsTrigger value="focus-documents">Reportes</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <IconLayoutColumns />
-                <span className="hidden lg:inline">Customize Columns</span>
-                <span className="lg:hidden">Columns</span>
-                <IconChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {table
-                .getAllColumns()
-                .filter(
-                  (column) =>
-                    typeof column.accessorFn !== "undefined" &&
-                    column.getCanHide()
-                )
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  )
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Filtro por Cursos */}
+          {courses && courses.length > 0 && (
+            <Select value={selectedCourseId || "ALL"} onValueChange={(value) => onCourseChange?.(value === "ALL" ? undefined : value)}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filtrar por curso" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Todos los cursos</SelectItem>
+                {courses.map((course) => (
+                  <SelectItem key={course.id} value={course.id}>
+                    <span className="truncate">{course.name}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Button variant="outline" size="sm" onClick={onRefresh}>
             <IconPlus />
             <span className="hidden lg:inline">Refrescar Datos</span>
