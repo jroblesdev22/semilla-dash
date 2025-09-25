@@ -6,10 +6,11 @@ interface StudentData {
   email: string
   courseId: string
   courseName: string
-  tareasEntregadas: number
-  tareasAtrasadas: number
-  tareasFaltantes: number
-  tareasReentrega: number
+  asignada: number
+  entregada: number
+  entregadaConRetraso: number
+  sinEntregar: number
+  devueltaCalificada: number
 }
 
 interface CourseData {

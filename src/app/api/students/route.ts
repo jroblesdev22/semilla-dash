@@ -9,10 +9,11 @@ interface StudentStats {
   email: string
   courseId: string
   courseName: string
-  tareasEntregadas: number
-  tareasAtrasadas: number
-  tareasFaltantes: number
-  tareasReentrega: number
+  asignada: number
+  entregada: number
+  entregadaConRetraso: number
+  sinEntregar: number
+  devueltaCalificada: number
 }
 
 export async function GET(request: Request) {
@@ -138,11 +139,12 @@ async function getStudentStats(
 
     const allAssignments = courseWork.data.courseWork || []
 
-    // Calculate statistics
-    let tareasEntregadas = 0
-    let tareasAtrasadas = 0 
-    let tareasReentrega = 0
-    let tareasFaltantes = 0
+    // Calculate statistics based on Google Classroom states
+    let asignada = 0               // NEW o CREATED dentro del plazo
+    let entregada = 0              // TURNED_IN con late = false
+    let entregadaConRetraso = 0    // TURNED_IN con late = true
+    let sinEntregar = 0            // NEW o CREATED fuera del plazo
+    let devueltaCalificada = 0     // RETURNED
 
     // Create a map of submissions by courseWorkId for easy lookup
     const submissionMap = new Map()
@@ -152,44 +154,78 @@ async function getStudentStats(
       }
     })
     
-    // Now analyze submissions using the more efficient approach
+    // Create a map of assignments by ID for date checking
+    const assignmentMap = new Map()
+    allAssignments.forEach((assignment: classroom_v1.Schema$CourseWork) => {
+      if (assignment.id) {
+        assignmentMap.set(assignment.id, assignment)
+      }
+    })
+    
+    // Helper function to check if assignment is overdue
+    const isOverdue = (assignment: classroom_v1.Schema$CourseWork): boolean => {
+      if (!assignment.dueDate) return false // No due date = never overdue
+      
+      const currentDate = new Date()
+      const dueDate = new Date(
+        assignment.dueDate.year || currentDate.getFullYear(),
+        (assignment.dueDate.month || 1) - 1, // months are 0-indexed
+        assignment.dueDate.day || 1
+      )
+      
+      // Add time if specified
+      if (assignment.dueTime) {
+        dueDate.setHours(assignment.dueTime.hours || 23)
+        dueDate.setMinutes(assignment.dueTime.minutes || 59)
+      } else {
+        // If no time specified, set to end of day
+        dueDate.setHours(23, 59, 59, 999)
+      }
+      
+      return currentDate > dueDate
+    }
+    
+    // Analyze submissions using the new categorization
     studentSubmissions.forEach((submission: classroom_v1.Schema$StudentSubmission) => {
       const state = submission.state
-      const isLate = submission.late
+      const isLate = submission.late === true
+      const assignment = assignmentMap.get(submission.courseWorkId)
       
       switch (state) {
-        case 'TURNED_IN':
-          tareasEntregadas++
+        case 'NEW':
+        case 'CREATED':
+          // Check if assignment is overdue
+          if (assignment && isOverdue(assignment)) {
+            sinEntregar++  // Sin entregar - venció el plazo
+          } else {
+            asignada++     // Asignada - aún en plazo
+          }
+          break
           
-          // Check if it was late using the 'late' property from the API
+        case 'TURNED_IN':
           if (isLate) {
-            tareasAtrasadas++
+            entregadaConRetraso++  // Entregada con retraso
+          } else {
+            entregada++            // Entregada a tiempo
           }
           break
           
         case 'RETURNED':
-          // Treat RETURNED submissions as completed
-          tareasEntregadas++
+          devueltaCalificada++     // Devuelta (calificada)
           break
           
         case 'RECLAIMED_BY_STUDENT':
-          // Student took back the submission, count as missing
-          tareasFaltantes++
-          break
-          
-        case 'NEW':
-          // Never accessed by student - missing
-          tareasFaltantes++
-          break
-          
-        case 'CREATED':
-          // Created but not submitted - missing
-          tareasFaltantes++
+          // Student reclaimed - treat as asignada if not overdue, otherwise sin entregar
+          if (assignment && isOverdue(assignment)) {
+            sinEntregar++
+          } else {
+            asignada++
+          }
           break
           
         default:
-          // Any other state - count as missing for safety
-          tareasFaltantes++
+          // Any other state - count as asignada for safety
+          asignada++
           break
       }
     })
@@ -198,9 +234,14 @@ async function getStudentStats(
     const assignmentsWithSubmissions = new Set(studentSubmissions.map(s => s.courseWorkId))
     const assignmentsWithoutSubmissions = allAssignments.filter(a => a.id && !assignmentsWithSubmissions.has(a.id))
     
-    // Add missing assignments to tareasFaltantes
-    const missingCount = assignmentsWithoutSubmissions.length
-    tareasFaltantes += missingCount
+    // For assignments without submissions, check if they're overdue
+    assignmentsWithoutSubmissions.forEach((assignment: classroom_v1.Schema$CourseWork) => {
+      if (isOverdue(assignment)) {
+        sinEntregar++  // Sin entregar - venció el plazo sin hacer nada
+      } else {
+        asignada++     // Asignada - aún en plazo
+      }
+    })
 
     const result = {
       id: `${student.userId || 'unknown'}-${courseId}`, // ID único combinando student y course
@@ -208,10 +249,11 @@ async function getStudentStats(
       email: student.profile?.emailAddress || '',
       courseId: courseId,
       courseName: courseName,
-      tareasEntregadas,
-      tareasAtrasadas,
-      tareasFaltantes,
-      tareasReentrega
+      asignada,
+      entregada,
+      entregadaConRetraso,
+      sinEntregar,
+      devueltaCalificada
     }    
     return result
   } catch (error) {
@@ -223,10 +265,11 @@ async function getStudentStats(
       email: student.profile?.emailAddress || '',
       courseId: courseId,
       courseName: courseName,
-      tareasEntregadas: 0,
-      tareasAtrasadas: 0,
-      tareasFaltantes: 0,
-      tareasReentrega: 0
+      asignada: 0,
+      entregada: 0,
+      entregadaConRetraso: 0,
+      sinEntregar: 0,
+      devueltaCalificada: 0
     }
     
     return errorResult

@@ -107,10 +107,11 @@ export const schema = z.object({
   email: z.string(),
   courseId: z.string(),
   courseName: z.string(),
-  tareasEntregadas: z.number(),
-  tareasAtrasadas: z.number(),
-  tareasFaltantes: z.number(),
-  tareasReentrega: z.number(),
+  asignada: z.number(),
+  entregada: z.number(),
+  entregadaConRetraso: z.number(),
+  sinEntregar: z.number(),
+  devueltaCalificada: z.number(),
 })
 
 // Create a separate component for the drag handle
@@ -174,45 +175,56 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "tareasEntregadas",
-    header: () => <div className="text-center">Tareas Entregadas</div>,
+    accessorKey: "asignada",
+    header: () => <div className="text-center">Asignada</div>,
+    cell: ({ row }) => (
+      <div className="text-center">
+        <Badge variant="secondary" className="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300">
+          {row.original.asignada}
+        </Badge>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "entregada",
+    header: () => <div className="text-center">Entregada</div>,
     cell: ({ row }) => (
       <div className="text-center">
         <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-          {row.original.tareasEntregadas}
+          {row.original.entregada}
         </Badge>
       </div>
     ),
   },
   {
-    accessorKey: "tareasAtrasadas",
-    header: () => <div className="text-center">Cant. Atrasado</div>,
-    cell: ({ row }) => (
-      <div className="text-center">
-        <Badge variant="secondary" className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300">
-          {row.original.tareasAtrasadas}
-        </Badge>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "tareasFaltantes",
-    header: () => <div className="text-center">Cant. Faltante</div>,
-    cell: ({ row }) => (
-      <div className="text-center">
-        <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
-          {row.original.tareasFaltantes}
-        </Badge>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "tareasReentrega",
-    header: () => <div className="text-center">Cant. Reentrega</div>,
+    accessorKey: "entregadaConRetraso",
+    header: () => <div className="text-center">Entregada con Retraso</div>,
     cell: ({ row }) => (
       <div className="text-center">
         <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
-          {row.original.tareasReentrega}
+          {row.original.entregadaConRetraso}
+        </Badge>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "sinEntregar",
+    header: () => <div className="text-center">Sin Entregar</div>,
+    cell: ({ row }) => (
+      <div className="text-center">
+        <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+          {row.original.sinEntregar}
+        </Badge>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "devueltaCalificada",
+    header: () => <div className="text-center">Calificada</div>,
+    cell: ({ row }) => (
+      <div className="text-center">
+        <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+          {row.original.devueltaCalificada}
         </Badge>
       </div>
     ),
@@ -639,10 +651,11 @@ function StudentDetailsViewer({ item }: { item: z.infer<typeof schema> }) {
                 <AreaChart
                   accessibilityLayer
                   data={[
-                    { category: "Entregadas", value: item.tareasEntregadas },
-                    { category: "Atrasadas", value: item.tareasAtrasadas },
-                    { category: "Faltantes", value: item.tareasFaltantes },
-                    { category: "Reentrega", value: item.tareasReentrega },
+                    { category: "Asignada", value: item.asignada },
+                    { category: "Entregada", value: item.entregada },
+                    { category: "Entregada con Retraso", value: item.entregadaConRetraso },
+                    { category: "Sin Entregar", value: item.sinEntregar },
+                    { category: "Devuelta (Calificada)", value: item.devueltaCalificada },
                   ]}
                   margin={{
                     left: 0,
@@ -700,29 +713,35 @@ function StudentDetailsViewer({ item }: { item: z.infer<typeof schema> }) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <Label className="font-medium">Tareas Entregadas</Label>
-                <Badge className="w-fit bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                  {item.tareasEntregadas}
+                <Label className="font-medium">Asignada</Label>
+                <Badge className="w-fit bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                  {item.asignada}
                 </Badge>
               </div>
               <div className="flex flex-col gap-2">
-                <Label className="font-medium">Tareas Atrasadas</Label>
-                <Badge className="w-fit bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300">
-                  {item.tareasAtrasadas}
+                <Label className="font-medium">Entregada</Label>
+                <Badge className="w-fit bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                  {item.entregada}
                 </Badge>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="flex flex-col gap-2">
-                <Label className="font-medium">Tareas Faltantes</Label>
-                <Badge className="w-fit bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
-                  {item.tareasFaltantes}
+                <Label className="font-medium">Entregada con Retraso</Label>
+                <Badge className="w-fit bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                  {item.entregadaConRetraso}
                 </Badge>
               </div>
               <div className="flex flex-col gap-2">
-                <Label className="font-medium">Para Reentrega</Label>
-                <Badge className="w-fit bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
-                  {item.tareasReentrega}
+                <Label className="font-medium">Sin Entregar</Label>
+                <Badge className="w-fit bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                  {item.sinEntregar}
+                </Badge>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="font-medium">Devuelta (Calificada)</Label>
+                <Badge className="w-fit bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                  {item.devueltaCalificada}
                 </Badge>
               </div>
             </div>
