@@ -113,28 +113,30 @@ async function getStudentStats(
   student: classroom_v1.Schema$Student,
   courseName: string
 ): Promise<StudentStats> {
-  try {
+  try {    
     // Get student submissions for the course - need to handle userId properly
     if (!student.userId) {
+      console.error('Student userId is missing for student:', student)
       throw new Error('Student userId is missing')
     }
     
+    // Obtiene todas las entregas del estudiante para el curso completo
     const submissions = await classroom.courses.courseWork.studentSubmissions.list({
       courseId: courseId,
+      courseWorkId: '-',  // Usar guión para obtener de todas las tareas
       userId: student.userId,
       pageSize: 100,
     })
 
     const studentSubmissions = submissions.data.studentSubmissions || []
 
-    // Get all course work for this course to compare
+    // Get all course work for this course to compare with submissions
     const courseWork = await classroom.courses.courseWork.list({
       courseId: courseId,
       pageSize: 100,
     })
 
     const allAssignments = courseWork.data.courseWork || []
-    // const totalAssignments = allAssignments.length // Not used currently
 
     // Calculate statistics
     let tareasEntregadas = 0
@@ -142,74 +144,65 @@ async function getStudentStats(
     let tareasReentrega = 0
     let tareasFaltantes = 0
 
-    // Create a map of submissions by course work ID
+    // Create a map of submissions by courseWorkId for easy lookup
     const submissionMap = new Map()
     studentSubmissions.forEach((submission: classroom_v1.Schema$StudentSubmission) => {
       if (submission.courseWorkId) {
         submissionMap.set(submission.courseWorkId, submission)
       }
     })
-
-    // Analyze each assignment
-    for (const assignment of allAssignments) {
-      const submission = submissionMap.get(assignment.id)
+    
+    // Now analyze submissions using the more efficient approach
+    studentSubmissions.forEach((submission: classroom_v1.Schema$StudentSubmission) => {
+      const state = submission.state
+      const isLate = submission.late
       
-      if (!submission) {
-        // No submission found - missing assignment
-        tareasFaltantes++
-      } else {
-        const state = submission.state
-        const assignmentState = submission.assignmentSubmission?.state
-        
-        switch (state) {
-          case 'TURNED_IN':
-            tareasEntregadas++
-            
-            // Check if it was late
-            if (assignment.dueDate && submission.updateTime && 
-                assignment.dueDate.year && assignment.dueDate.month && assignment.dueDate.day) {
-              const dueDate = new Date(
-                assignment.dueDate.year,
-                assignment.dueDate.month - 1,
-                assignment.dueDate.day
-              )
-              
-              if (assignment.dueTime) {
-                dueDate.setHours(assignment.dueTime.hours ?? 23)
-                dueDate.setMinutes(assignment.dueTime.minutes ?? 59)
-              }
-              
-              const submissionDate = new Date(submission.updateTime)
-              
-              if (submissionDate > dueDate) {
-                tareasAtrasadas++
-              }
-            }
-            break
-            
-          case 'RETURNED':
-            // Check if it needs resubmission
-            if (assignmentState === 'CREATED' || assignmentState === 'STUDENT_EDITED_AFTER_TURN_IN') {
-              tareasReentrega++
-            } else {
-              tareasEntregadas++
-            }
-            break
-            
-          case 'RECLAIMED_BY_STUDENT':
-            // Student took back the submission, count as missing for now
-            tareasFaltantes++
-            break
-            
-          default:
-            // NEW, CREATED states - not submitted yet
-            tareasFaltantes++
-            break
-        }
+      switch (state) {
+        case 'TURNED_IN':
+          tareasEntregadas++
+          
+          // Check if it was late using the 'late' property from the API
+          if (isLate) {
+            tareasAtrasadas++
+          }
+          break
+          
+        case 'RETURNED':
+          // Treat RETURNED submissions as completed
+          tareasEntregadas++
+          break
+          
+        case 'RECLAIMED_BY_STUDENT':
+          // Student took back the submission, count as missing
+          tareasFaltantes++
+          break
+          
+        case 'NEW':
+          // Never accessed by student - missing
+          tareasFaltantes++
+          break
+          
+        case 'CREATED':
+          // Created but not submitted - missing
+          tareasFaltantes++
+          break
+          
+        default:
+          // Any other state - count as missing for safety
+          tareasFaltantes++
+          break
       }
-    }
+    })
+    
+    // Calculate assignments that have no submission at all
+    const assignmentsWithSubmissions = new Set(studentSubmissions.map(s => s.courseWorkId))
+    const assignmentsWithoutSubmissions = allAssignments.filter(a => a.id && !assignmentsWithSubmissions.has(a.id))
+    
+    // Add missing assignments to tareasFaltantes
+    const missingCount = assignmentsWithoutSubmissions.length
+    tareasFaltantes += missingCount
 
-    return {
+    const result = {
       id: `${student.userId || 'unknown'}-${courseId}`, // ID único combinando student y course
       name: student.profile?.name?.fullName || 'Unknown Student',
       email: student.profile?.emailAddress || '',
@@ -219,12 +212,12 @@ async function getStudentStats(
       tareasAtrasadas,
       tareasFaltantes,
       tareasReentrega
-    }
+    }    
+    return result
   } catch (error) {
-    console.error(`Error getting stats for student ${student.userId}:`, error)
     
     // Return default stats in case of error
-    return {
+    const errorResult = {
       id: `${student.userId || 'unknown'}-${courseId}`, // ID único combinando student y course
       name: student.profile?.name?.fullName || 'Unknown Student',
       email: student.profile?.emailAddress || '',
@@ -235,5 +228,7 @@ async function getStudentStats(
       tareasFaltantes: 0,
       tareasReentrega: 0
     }
+    
+    return errorResult
   }
 }
