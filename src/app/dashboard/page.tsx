@@ -14,6 +14,7 @@ import { Loader2, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import { ListTeachers } from "@/components/list-teachers"
 
 export default function Page() {
   const [selectedCourseId, setSelectedCourseId] = useState<string | undefined>()
@@ -58,15 +59,30 @@ export default function Page() {
                   </Alert>
                 </div>
               ) : (
-                <DataTable 
-                  data={students} 
+                <DataTable
+                  data={students}
                   onRefresh={refetch}
                   courses={courses}
                   selectedCourseId={selectedCourseId}
                   onCourseChange={setSelectedCourseId}
                 />
               )}
+
+              <h2 className="px-4 lg:px-6 text-2xl font-bold">Listado de profesores</h2>
+              {/* colocar cuadro de color junto a nombre del curso entonces iria [color] nombre del curso */}
+              <div className="flex flex-row gap-2 px-4 lg:px-6">
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 rounded-sm bg-amber-500" />
+                  <span className="text-base font-semibold">Marketing Digital</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 rounded-sm bg-green-500" />
+                  <span className="text-base font-semibold">E-commerce</span>
+                </div>
+              </div>
+              <ListTeachers />
             </div>
+
           </div>
         </div>
       </SidebarInset>
