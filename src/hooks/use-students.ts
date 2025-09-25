@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 interface StudentData {
   id: string
@@ -12,9 +12,15 @@ interface StudentData {
   tareasReentrega: number
 }
 
+interface CourseData {
+  id: string
+  name: string
+  courseState?: string
+}
+
 interface UseStudentsReturn {
   students: StudentData[]
-  courses: any[]
+  courses: CourseData[]
   loading: boolean
   error: string | null
   refetch: () => void
@@ -22,11 +28,11 @@ interface UseStudentsReturn {
 
 export function useStudents(courseId?: string): UseStudentsReturn {
   const [students, setStudents] = useState<StudentData[]>([])
-  const [courses, setCourses] = useState<any[]>([])
+  const [courses, setCourses] = useState<CourseData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -57,11 +63,11 @@ export function useStudents(courseId?: string): UseStudentsReturn {
     } finally {
       setLoading(false)
     }
-  }
+  }, [courseId])
 
   useEffect(() => {
     fetchStudents()
-  }, [courseId])
+  }, [courseId, fetchStudents])
 
   const refetch = () => {
     fetchStudents()

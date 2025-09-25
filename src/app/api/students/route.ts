@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { google } from "googleapis"
 import { NextResponse } from "next/server"
+import type { classroom_v1 } from "googleapis"
 
 interface StudentStats {
   id: string
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
       auth: oauth2Client
     })
 
-    let students: StudentStats[] = []
+    const students: StudentStats[] = []
     
     // Always get all courses first
     const coursesResult = await classroom.courses.list({
@@ -86,9 +87,16 @@ export async function GET(request: Request) {
       }
     }
 
+    // Map courses to include only the properties we need
+    const mappedCourses = courses.map(course => ({
+      id: course.id || '',
+      name: course.name || '',
+      courseState: course.courseState || 'UNKNOWN'
+    }))
+
     return NextResponse.json({ 
       students,
-      courses // Always return courses
+      courses: mappedCourses
     })
   } catch (error) {
     console.error('Error fetching students:', error)
@@ -100,13 +108,17 @@ export async function GET(request: Request) {
 }
 
 async function getStudentStats(
-  classroom: any, 
+  classroom: classroom_v1.Classroom, 
   courseId: string, 
-  student: any,
+  student: classroom_v1.Schema$Student,
   courseName: string
 ): Promise<StudentStats> {
   try {
-    // Get student submissions for the course
+    // Get student submissions for the course - need to handle userId properly
+    if (!student.userId) {
+      throw new Error('Student userId is missing')
+    }
+    
     const submissions = await classroom.courses.courseWork.studentSubmissions.list({
       courseId: courseId,
       userId: student.userId,
@@ -122,7 +134,7 @@ async function getStudentStats(
     })
 
     const allAssignments = courseWork.data.courseWork || []
-    const totalAssignments = allAssignments.length
+    // const totalAssignments = allAssignments.length // Not used currently
 
     // Calculate statistics
     let tareasEntregadas = 0
@@ -132,7 +144,7 @@ async function getStudentStats(
 
     // Create a map of submissions by course work ID
     const submissionMap = new Map()
-    studentSubmissions.forEach((submission: any) => {
+    studentSubmissions.forEach((submission: classroom_v1.Schema$StudentSubmission) => {
       if (submission.courseWorkId) {
         submissionMap.set(submission.courseWorkId, submission)
       }
@@ -154,7 +166,8 @@ async function getStudentStats(
             tareasEntregadas++
             
             // Check if it was late
-            if (assignment.dueDate && submission.updateTime) {
+            if (assignment.dueDate && submission.updateTime && 
+                assignment.dueDate.year && assignment.dueDate.month && assignment.dueDate.day) {
               const dueDate = new Date(
                 assignment.dueDate.year,
                 assignment.dueDate.month - 1,
@@ -162,8 +175,8 @@ async function getStudentStats(
               )
               
               if (assignment.dueTime) {
-                dueDate.setHours(assignment.dueTime.hours || 23)
-                dueDate.setMinutes(assignment.dueTime.minutes || 59)
+                dueDate.setHours(assignment.dueTime.hours ?? 23)
+                dueDate.setMinutes(assignment.dueTime.minutes ?? 59)
               }
               
               const submissionDate = new Date(submission.updateTime)

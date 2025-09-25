@@ -41,7 +41,7 @@ export function CourseSelector({ selectedCourseId, onCourseChange }: CourseSelec
                 <div className="flex items-center justify-between w-full">
                   <span>{course.name}</span>
                   <Badge variant="secondary" className="ml-2">
-                    {course.courseState}
+                    {course.courseState || 'ACTIVE'}
                   </Badge>
                 </div>
               </SelectItem>

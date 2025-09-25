@@ -21,16 +21,12 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import {
-  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
   IconChevronsLeft,
   IconChevronsRight,
-  IconCircleCheckFilled,
   IconDotsVertical,
   IconGripVertical,
-  IconLayoutColumns,
-  IconLoader,
   IconPlus,
   IconTrendingUp,
 } from "@tabler/icons-react"
@@ -50,7 +46,7 @@ import {
   VisibilityState,
 } from "@tanstack/react-table"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-import { toast } from "sonner"
+// import { toast } from "sonner" // Removed - not used
 import { z } from "zod"
 
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -75,13 +71,12 @@ import {
 } from "@/components/ui/drawer"
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+// import { Input } from "@/components/ui/input" // Removed - not used
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -224,7 +219,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => (
+    cell: () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -282,7 +277,7 @@ export function DataTable({
 }: {
   data: z.infer<typeof schema>[]
   onRefresh?: () => void
-  courses?: any[]
+  courses?: Array<{id: string; name: string}>
   selectedCourseId?: string
   onCourseChange?: (courseId: string | undefined) => void
 }) {
@@ -561,14 +556,7 @@ export function DataTable({
   )
 }
 
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-]
+// Removed unused chartData
 
 const chartConfig = {
   desktop: {
