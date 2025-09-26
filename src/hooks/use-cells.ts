@@ -5,7 +5,11 @@ import {
   CreateCellRequest,
   CreateCellResponse,
   AssignUserToCellRequest,
-  AssignUserResponse
+  AssignUserResponse,
+  UpdateCellRequest,
+  UpdateCellResponse,
+  DeleteCellResponse,
+  StudentsByCourseResponse
 } from '@/types/cell'
 
 interface UseCellsReturn {
@@ -15,8 +19,13 @@ interface UseCellsReturn {
   refetch: () => void
   createCell: (cellData: CreateCellRequest) => Promise<CreateCellResponse>
   assignUserToCell: (assignData: AssignUserToCellRequest) => Promise<AssignUserResponse>
+  updateCell: (cellId: string, updateData: UpdateCellRequest) => Promise<UpdateCellResponse>
+  deleteCell: (cellId: string) => Promise<DeleteCellResponse>
+  getStudentsByCourse: (courseId: string) => Promise<StudentsByCourseResponse>
   creating: boolean
   assigning: boolean
+  updating: boolean
+  deleting: boolean
 }
 
 export function useCells(): UseCellsReturn {
@@ -25,6 +34,8 @@ export function useCells(): UseCellsReturn {
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [assigning, setAssigning] = useState(false)
+  const [updating, setUpdating] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchCells = useCallback(async () => {
     try {
@@ -135,6 +146,98 @@ export function useCells(): UseCellsReturn {
     fetchCells()
   }
 
+  const updateCell = useCallback(async (cellId: string, updateData: UpdateCellRequest): Promise<UpdateCellResponse> => {
+    try {
+      setUpdating(true)
+      setError(null)
+
+      const response = await fetch(`/api/cells/${cellId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData)
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data: UpdateCellResponse = await response.json()
+
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      // Refetch cells after successful update
+      await fetchCells()
+
+      return data
+    } catch (err) {
+      console.error('Error updating cell:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
+      setError(errorMessage)
+      throw new Error(errorMessage)
+    } finally {
+      setUpdating(false)
+    }
+  }, [fetchCells])
+
+  const deleteCell = useCallback(async (cellId: string): Promise<DeleteCellResponse> => {
+    try {
+      setDeleting(true)
+      setError(null)
+
+      const response = await fetch(`/api/cells/${cellId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data: DeleteCellResponse = await response.json()
+
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      // Refetch cells after successful deletion
+      await fetchCells()
+
+      return data
+    } catch (err) {
+      console.error('Error deleting cell:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
+      setError(errorMessage)
+      throw new Error(errorMessage)
+    } finally {
+      setDeleting(false)
+    }
+  }, [fetchCells])
+
+  const getStudentsByCourse = useCallback(async (courseId: string): Promise<StudentsByCourseResponse> => {
+    try {
+      const response = await fetch(`/api/students/by-course/${courseId}`)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data: StudentsByCourseResponse = await response.json()
+
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      return data
+    } catch (err) {
+      console.error('Error fetching students by course:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred'
+      throw new Error(errorMessage)
+    }
+  }, [])
+
   return {
     cells,
     loading,
@@ -142,7 +245,12 @@ export function useCells(): UseCellsReturn {
     refetch,
     createCell,
     assignUserToCell,
+    updateCell,
+    deleteCell,
+    getStudentsByCourse,
     creating,
-    assigning
+    assigning,
+    updating,
+    deleting
   }
 }

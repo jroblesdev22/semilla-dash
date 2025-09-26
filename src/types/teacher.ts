@@ -1,22 +1,7 @@
-export interface TeacherCell {
-  id: string
-  name: string
-  course_id: string
-  course: {
-    id: string
-    name: string
-    color_hex: string
-  }
-  members: CellMember[]
-}
+import { Cell } from '@/types/cell'
 
-export interface CellMember {
-  id: string
-  name: string
-  email: string | null
-  role: string
-  joined_at: Date | null
-}
+// Use the same Cell type to avoid conflicts
+export type TeacherCell = Cell
 
 export interface Teacher {
   id: string

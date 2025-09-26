@@ -13,14 +13,16 @@ import { IconPlus } from "@tabler/icons-react"
 import { LuTrash2, LuPencil, LuPlus, LuRefreshCw } from "react-icons/lu"
 import { useTeachers } from "@/hooks/use-teachers"
 import { useCells } from "@/hooks/use-cells"
-import { Teacher } from "@/types/teacher"
 import { AssignCellModal } from "@/components/assign-cell-modal"
-import { CreateCellRequest, AssignUserToCellRequest } from "@/types/cell"
+import { DeleteCellModal } from "@/components/delete-cell-modal"
+import { EditCellModal } from "@/components/edit-cell-modal"
+import { AddStudentsModal } from "@/components/add-students-modal"
+import { CreateCellRequest, AssignUserToCellRequest, UpdateCellRequest } from "@/types/cell"
 
 
 export function ListTeachers() {
     const { teachers, loading, error, syncTeachers, syncing, refetch: refetchTeachers } = useTeachers()
-    const { createCell, assignUserToCell, creating, assigning } = useCells()
+    const { createCell, assignUserToCell, updateCell, deleteCell, getStudentsByCourse, creating, assigning, updating, deleting } = useCells()
 
     const handleSync = async () => {
         try {
@@ -52,6 +54,50 @@ export function ListTeachers() {
         } catch (error) {
             alert(`❌ Error al crear y asignar célula: ${error instanceof Error ? error.message : 'Error desconocido'}`)
             throw error // Re-throw to prevent modal from closing
+        }
+    }
+
+    const handleUpdateCell = async (cellId: string, updateData: UpdateCellRequest) => {
+        try {
+            const result = await updateCell(cellId, updateData)
+            alert(`✅ ${result.message}`)
+            // Refetch teachers to update the UI
+            refetchTeachers()
+        } catch (error) {
+            alert(`❌ Error al actualizar célula: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+            throw error
+        }
+    }
+
+    const handleDeleteCell = async (cellId: string) => {
+        try {
+            const result = await deleteCell(cellId)
+            alert(`✅ ${result.message}`)
+            // Refetch teachers to update the UI
+            refetchTeachers()
+        } catch (error) {
+            alert(`❌ Error al eliminar célula: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+            throw error
+        }
+    }
+
+    const handleAddStudents = async (studentIds: string[], cellId: string) => {
+        try {
+            // Add each student to the cell
+            const promises = studentIds.map(studentId =>
+                assignUserToCell({
+                    user_id: studentId,
+                    cell_id: cellId
+                })
+            )
+
+            await Promise.all(promises)
+            alert(`✅ ${studentIds.length} estudiante${studentIds.length > 1 ? 's' : ''} agregado${studentIds.length > 1 ? 's' : ''} a la célula exitosamente`)
+            // Refetch teachers to update the UI
+            refetchTeachers()
+        } catch (error) {
+            alert(`❌ Error al agregar estudiantes: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+            throw error
         }
     }
 
@@ -109,7 +155,7 @@ export function ListTeachers() {
                 className="px-4 lg:px-6"
                 defaultValue={teachers.length > 0 ? `teacher-${teachers[0].id}` : undefined}
             >
-                {teachers.map((teacher, index) => (
+                {teachers.map((teacher) => (
                     <AccordionItem key={teacher.id} value={`teacher-${teacher.id}`} className="w-full">
                         <AccordionTrigger className="flex w-full items-center justify-between [&>*]:no-underline [&_*]:no-underline [&]:hover:no-underline cursor-pointer">
                             <div className="flex items-center gap-4">
@@ -171,15 +217,34 @@ export function ListTeachers() {
                                                                     ))}
                                                                 </div>
                                                                 <div className="flex items-center justify-end gap-2 mt-2">
-                                                                    <Button variant="destructive" size="icon">
-                                                                        <LuTrash2 />
-                                                                    </Button>
-                                                                    <Button variant="outline" size="icon">
-                                                                        <LuPencil />
-                                                                    </Button>
-                                                                    <Button variant="outline" size="icon">
-                                                                        <LuPlus />
-                                                                    </Button>
+                                                                    <DeleteCellModal
+                                                                        cell={cell}
+                                                                        onDeleteCell={handleDeleteCell}
+                                                                        deleting={deleting}
+                                                                    >
+                                                                        <Button variant="destructive" size="icon">
+                                                                            <LuTrash2 />
+                                                                        </Button>
+                                                                    </DeleteCellModal>
+                                                                    <EditCellModal
+                                                                        cell={cell}
+                                                                        onUpdateCell={handleUpdateCell}
+                                                                        updating={updating}
+                                                                    >
+                                                                        <Button variant="outline" size="icon">
+                                                                            <LuPencil />
+                                                                        </Button>
+                                                                    </EditCellModal>
+                                                                    <AddStudentsModal
+                                                                        cell={cell}
+                                                                        onAddStudents={(studentIds) => handleAddStudents(studentIds, cell.id)}
+                                                                        getStudentsByCourse={getStudentsByCourse}
+                                                                        processing={assigning}
+                                                                    >
+                                                                        <Button variant="outline" size="icon">
+                                                                            <LuPlus />
+                                                                        </Button>
+                                                                    </AddStudentsModal>
                                                                 </div>
                                                             </CardContent>
                                                         </Card>

@@ -79,7 +79,7 @@ export function CreateCellModal({ children, onCreateCell, creating }: CreateCell
       setName("")
       setCourseId("")
       setOpen(false)
-    } catch (error) {
+    } catch {
       // Error handling is done in the parent component
     }
   }

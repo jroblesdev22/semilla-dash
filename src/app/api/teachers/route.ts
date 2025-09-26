@@ -37,6 +37,8 @@ export async function GET() {
         id: member.cell.id,
         name: member.cell.name,
         course_id: member.cell.course_id,
+        created_at: member.cell.created_at,
+        updated_at: member.cell.updated_at,
         course: {
           id: member.cell.course.id,
           name: member.cell.course.name,

@@ -53,3 +53,35 @@ export interface AssignUserResponse {
   }
   error?: string
 }
+
+export interface UpdateCellRequest {
+  name: string
+}
+
+export interface UpdateCellResponse {
+  message: string
+  cell: Cell
+  error?: string
+}
+
+export interface DeleteCellResponse {
+  message: string
+  error?: string
+}
+
+export interface Student {
+  id: string
+  name: string
+  email: string | null
+  role: string
+}
+
+export interface StudentsByCourseResponse {
+  students: Student[]
+  course: {
+    id: string
+    name: string
+    color_hex: string
+  }
+  error?: string
+}

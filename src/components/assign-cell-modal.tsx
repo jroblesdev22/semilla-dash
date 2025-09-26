@@ -99,7 +99,7 @@ export function AssignCellModal({
           cell_id: selectedCellId
         })
         handleClose()
-      } catch (error) {
+      } catch {
         // Error handling is done in parent component
       }
     } else if (mode === 'create' && newCellName.trim() && selectedCourseId) {
@@ -111,7 +111,7 @@ export function AssignCellModal({
           assign_user: true
         })
         handleClose()
-      } catch (error) {
+      } catch {
         // Error handling is done in parent component
       }
     }
