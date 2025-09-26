@@ -3,12 +3,66 @@ import { google } from "googleapis"
 import { NextResponse } from "next/server"
 import type { classroom_v1 } from "googleapis"
 
+interface TeacherInfo {
+  id: string
+  name: string
+  email: string
+}
+
+// Cache para profesores por curso para evitar múltiples llamadas
+const teacherCache = new Map<string, TeacherInfo | null>()
+
+async function getCourseTeacher(
+  classroom: classroom_v1.Classroom,
+  courseId: string
+): Promise<TeacherInfo | null> {
+  // Check cache first
+  if (teacherCache.has(courseId)) {
+    return teacherCache.get(courseId) || null
+  }
+
+  try {
+    const teachersResponse = await classroom.courses.teachers.list({
+      courseId: courseId
+    })
+
+    const teachers = teachersResponse.data.teachers || []
+    
+    // Get the first teacher (usually the course owner)
+    if (teachers.length > 0 && teachers[0].profile) {
+      const teacher = teachers[0]
+      const profile = teacher.profile!
+      const teacherInfo: TeacherInfo = {
+        id: profile.id || '',
+        name: profile.name?.fullName || 'Sin nombre',
+        email: profile.emailAddress || ''
+      }
+      
+      // Cache the result
+      teacherCache.set(courseId, teacherInfo)
+      return teacherInfo
+    }
+    
+    // Cache null result to avoid repeated API calls
+    teacherCache.set(courseId, null)
+    return null
+  } catch (error) {
+    console.error(`Error getting teacher for course ${courseId}:`, error)
+    // Cache null result to avoid repeated API calls
+    teacherCache.set(courseId, null)
+    return null
+  }
+}
+
 interface StudentStats {
   id: string
   name: string
   email: string
   courseId: string
   courseName: string
+  teacherId?: string
+  teacherName?: string
+  teacherEmail?: string
   asignada: number
   entregada: number
   entregadaConRetraso: number
@@ -115,6 +169,9 @@ async function getStudentStats(
   courseName: string
 ): Promise<StudentStats> {
   try {    
+    // Get teacher information for this course
+    const teacherInfo = await getCourseTeacher(classroom, courseId)
+    
     // Get student submissions for the course - need to handle userId properly
     if (!student.userId) {
       console.error('Student userId is missing for student:', student)
@@ -249,6 +306,9 @@ async function getStudentStats(
       email: student.profile?.emailAddress || '',
       courseId: courseId,
       courseName: courseName,
+      teacherId: teacherInfo?.id,
+      teacherName: teacherInfo?.name,
+      teacherEmail: teacherInfo?.email,
       asignada,
       entregada,
       entregadaConRetraso,
@@ -266,6 +326,9 @@ async function getStudentStats(
       email: student.profile?.emailAddress || '',
       courseId: courseId,
       courseName: courseName,
+      teacherId: undefined,
+      teacherName: undefined,
+      teacherEmail: undefined,
       asignada: 0,
       entregada: 0,
       entregadaConRetraso: 0,

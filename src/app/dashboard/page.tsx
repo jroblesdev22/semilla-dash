@@ -10,6 +10,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { useStudents } from "@/hooks/use-students"
+import { useTeachers } from "@/hooks/use-teachers"
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -24,10 +25,12 @@ interface Course {
 
 export default function Page() {
   const [selectedCourseId, setSelectedCourseId] = useState<string | undefined>()
+  const [selectedProfessor, setSelectedProfessor] = useState<string | undefined>()
   const [dbCourses, setDbCourses] = useState<Course[]>([])
   const [coursesLoading, setCoursesLoading] = useState(false)
   const [syncLoading, setSyncLoading] = useState(false)
   const { students, courses, loading, error, refetch } = useStudents(selectedCourseId)
+  const { teachers } = useTeachers()
 
   const fetchCoursesFromDB = async () => {
     setCoursesLoading(true)
@@ -65,6 +68,20 @@ export default function Page() {
   useEffect(() => {
     fetchCoursesFromDB()
   }, [])
+
+  // Filter students by selected professor
+  const filteredStudents = selectedProfessor 
+    ? students.filter(student => student.teacherId === selectedProfessor)
+    : students
+
+  // Create professor list for selector from unique teachers in student data
+  const professorsFromStudents = Array.from(
+    new Map(
+      students
+        .filter(student => student.teacherId && student.teacherName)
+        .map(student => [student.teacherId!, { id: student.teacherId!, name: student.teacherName! }])
+    ).values()
+  )
 
   return (
     <SidebarProvider
@@ -104,15 +121,18 @@ export default function Page() {
                 </div>
               ) : (
                 <DataTable
-                  data={students}
+                  data={filteredStudents}
                   onRefresh={refetch}
                   courses={courses}
                   selectedCourseId={selectedCourseId}
                   onCourseChange={setSelectedCourseId}
+                  professors={professorsFromStudents}
+                  selectedProfessor={selectedProfessor}
+                  onProfessorChange={setSelectedProfessor}
                 />
               )}
 
-              <h2 className="px-4 lg:px-6 text-2xl font-bold">Listado de profesores</h2>
+              <h2 className="px-4 lg:px-6 text-2xl font-bold">Listado de cursos</h2>
               {/* colocar cuadro de color junto a nombre del curso entonces iria [color] nombre del curso */}
               <div className="flex flex-row gap-2 px-4 lg:px-6">
                 {coursesLoading ? (

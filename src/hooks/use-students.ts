@@ -6,6 +6,9 @@ interface StudentData {
   email: string
   courseId: string
   courseName: string
+  teacherId?: string
+  teacherName?: string
+  teacherEmail?: string
   asignada: number
   entregada: number
   entregadaConRetraso: number
