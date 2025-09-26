@@ -34,8 +34,6 @@
     "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "drizzle-kit": "^0.31.4",
-    "drizzle-orm": "^0.44.5",
     "embla-carousel-react": "^8.6.0",
     "googleapis": "^95.0.0",
     "lucide-react": "^0.544.0",
