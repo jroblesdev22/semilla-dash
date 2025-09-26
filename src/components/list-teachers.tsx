@@ -204,20 +204,22 @@ export function ListTeachers() {
                         value={`teacher-${teacher.id}`} 
                         className="border rounded-lg bg-card overflow-hidden"
                     >
-                        <AccordionTrigger className="px-6 py-4 hover:no-underline [&[data-state=open]]:border-b">
+                        <div className="px-6 py-4 border-b">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-medium">
-                                        {teacher.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                <AccordionTrigger className="hover:no-underline p-0 flex-1">
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-medium">
+                                            {teacher.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                        </div>
+                                        <div className="text-left">
+                                            <h3 className="text-lg font-semibold">{teacher.name}</h3>
+                                            <p className="text-sm text-muted-foreground">
+                                                {teacher.cells.length} {teacher.cells.length === 1 ? 'célula' : 'células'}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="text-left">
-                                        <h3 className="text-lg font-semibold">{teacher.name}</h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            {teacher.cells.length} {teacher.cells.length === 1 ? 'célula' : 'células'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 mr-4">
+                                </AccordionTrigger>
+                                <div className="flex items-center gap-3">
                                     <div className="flex items-center gap-2">
                                         {teacher.cells.slice(0, 3).map((cell) => (
                                             <Badge
@@ -246,7 +248,6 @@ export function ListTeachers() {
                                             variant="outline" 
                                             size="sm" 
                                             className="gap-2"
-                                            onClick={(e) => e.stopPropagation()}
                                         >
                                             <IconPlus className="h-4 w-4" />
                                             Agregar Célula
@@ -254,7 +255,7 @@ export function ListTeachers() {
                                     </AssignCellModal>
                                 </div>
                             </div>
-                        </AccordionTrigger>
+                        </div>
                         <AccordionContent className="px-6 pb-6">
                             {teacher.cells.length > 0 ? (
                                 <div className="mt-4">
