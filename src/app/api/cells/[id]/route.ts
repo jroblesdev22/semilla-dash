@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import type { CellMember, User } from "@prisma/client"
 
 // GET single cell
 export async function GET(
@@ -39,7 +40,7 @@ export async function GET(
         name: cell.course.name,
         color_hex: cell.course.color_hex
       },
-      members: cell.cell_members.map(member => ({
+      members: cell.cell_members.map((member: CellMember & { user: User }) => ({
         id: member.user.id,
         name: member.user.name || 'Sin nombre',
         email: member.user.email,
@@ -114,7 +115,7 @@ export async function PUT(
         name: updatedCell.course.name,
         color_hex: updatedCell.course.color_hex
       },
-      members: updatedCell.cell_members.map(member => ({
+      members: updatedCell.cell_members.map((member: CellMember & { user: User }) => ({
         id: member.user.id,
         name: member.user.name || 'Sin nombre',
         email: member.user.email,
