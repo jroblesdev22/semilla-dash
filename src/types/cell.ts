@@ -23,6 +23,13 @@ export interface CellMember {
 export interface CreateCellRequest {
   name: string
   course_id: string
+  user_id?: string
+  assign_user?: boolean
+}
+
+export interface AssignUserToCellRequest {
+  user_id: string
+  cell_id: string
 }
 
 export interface CellsResponse {
@@ -33,5 +40,16 @@ export interface CellsResponse {
 export interface CreateCellResponse {
   message: string
   cell: Cell
+  error?: string
+}
+
+export interface AssignUserResponse {
+  message: string
+  cellMember: {
+    id: string
+    cell_id: string
+    user_id: string
+    joined_at: Date
+  }
   error?: string
 }

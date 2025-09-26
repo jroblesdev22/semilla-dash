@@ -50,7 +50,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, course_id } = await request.json()
+    const { name, course_id, user_id, assign_user = false } = await request.json()
 
     // Validar datos requeridos
     if (!name || !course_id) {
@@ -58,6 +58,20 @@ export async function POST(request: Request) {
         { error: "Name and course_id are required" },
         { status: 400 }
       )
+    }
+
+    // Si se va a asignar un usuario, verificar que existe
+    if (assign_user && user_id) {
+      const user = await db.user.findUnique({
+        where: { id: user_id }
+      })
+
+      if (!user) {
+        return NextResponse.json(
+          { error: "User not found" },
+          { status: 404 }
+        )
+      }
     }
 
     // Verificar que el curso existe
@@ -80,7 +94,24 @@ export async function POST(request: Request) {
         course_id: course_id,
         created_at: new Date(),
         updated_at: new Date()
-      },
+      }
+    })
+
+    // Si se especifica asignar usuario, crear la relación
+    if (assign_user && user_id) {
+      await db.cellMember.create({
+        data: {
+          id: randomUUID(),
+          cell_id: newCell.id,
+          user_id: user_id,
+          joined_at: new Date()
+        }
+      })
+    }
+
+    // Obtener la célula completa con relaciones
+    const cellWithMembers = await db.cell.findUnique({
+      where: { id: newCell.id },
       include: {
         course: true,
         cell_members: {
@@ -91,18 +122,18 @@ export async function POST(request: Request) {
       }
     })
 
-    const cellWithMembers = {
-      id: newCell.id,
-      name: newCell.name,
-      course_id: newCell.course_id,
-      created_at: newCell.created_at,
-      updated_at: newCell.updated_at,
+    const formattedCell = {
+      id: cellWithMembers!.id,
+      name: cellWithMembers!.name,
+      course_id: cellWithMembers!.course_id,
+      created_at: cellWithMembers!.created_at,
+      updated_at: cellWithMembers!.updated_at,
       course: {
-        id: newCell.course.id,
-        name: newCell.course.name,
-        color_hex: newCell.course.color_hex
+        id: cellWithMembers!.course.id,
+        name: cellWithMembers!.course.name,
+        color_hex: cellWithMembers!.course.color_hex
       },
-      members: newCell.cell_members.map(member => ({
+      members: cellWithMembers!.cell_members.map(member => ({
         id: member.user.id,
         name: member.user.name || 'Sin nombre',
         email: member.user.email,
@@ -112,8 +143,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      message: "Célula creada exitosamente",
-      cell: cellWithMembers
+      message: assign_user ? "Célula creada y usuario asignado exitosamente" : "Célula creada exitosamente",
+      cell: formattedCell
     })
   } catch (error) {
     console.error('Error creating cell:', error)

@@ -14,13 +14,13 @@ import { LuTrash2, LuPencil, LuPlus, LuRefreshCw } from "react-icons/lu"
 import { useTeachers } from "@/hooks/use-teachers"
 import { useCells } from "@/hooks/use-cells"
 import { Teacher } from "@/types/teacher"
-import { CreateCellModal } from "@/components/create-cell-modal"
-import { CreateCellRequest } from "@/types/cell"
+import { AssignCellModal } from "@/components/assign-cell-modal"
+import { CreateCellRequest, AssignUserToCellRequest } from "@/types/cell"
 
 
 export function ListTeachers() {
-    const { teachers, loading, error, syncTeachers, syncing } = useTeachers()
-    const { createCell, creating } = useCells()
+    const { teachers, loading, error, syncTeachers, syncing, refetch: refetchTeachers } = useTeachers()
+    const { createCell, assignUserToCell, creating, assigning } = useCells()
 
     const handleSync = async () => {
         try {
@@ -31,12 +31,26 @@ export function ListTeachers() {
         }
     }
 
-    const handleCreateCell = async (cellData: CreateCellRequest) => {
+    const handleAssignToCell = async (assignData: AssignUserToCellRequest) => {
+        try {
+            const result = await assignUserToCell(assignData)
+            alert(`✅ ${result.message}`)
+            // Refetch teachers to update the UI
+            refetchTeachers()
+        } catch (error) {
+            alert(`❌ Error al asignar a célula: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+            throw error // Re-throw to prevent modal from closing
+        }
+    }
+
+    const handleCreateAndAssignCell = async (cellData: CreateCellRequest) => {
         try {
             const result = await createCell(cellData)
             alert(`✅ ${result.message}`)
+            // Refetch teachers to update the UI
+            refetchTeachers()
         } catch (error) {
-            alert(`❌ Error al crear célula: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+            alert(`❌ Error al crear y asignar célula: ${error instanceof Error ? error.message : 'Error desconocido'}`)
             throw error // Re-throw to prevent modal from closing
         }
     }
@@ -110,9 +124,12 @@ export function ListTeachers() {
                                             {cell.name}
                                         </Badge>
                                     ))}
-                                    <CreateCellModal
-                                        onCreateCell={handleCreateCell}
-                                        creating={creating}
+                                    <AssignCellModal
+                                        userId={teacher.id}
+                                        userName={teacher.name}
+                                        onAssignToCell={handleAssignToCell}
+                                        onCreateAndAssignCell={handleCreateAndAssignCell}
+                                        processing={creating || assigning}
                                     >
                                         <div
                                             className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground px-2 h-7 cursor-pointer shrink-0"
@@ -123,7 +140,7 @@ export function ListTeachers() {
                                             <IconPlus className="h-4 w-4" />
                                             <span className="text-xs">Agregar Celula</span>
                                         </div>
-                                    </CreateCellModal>
+                                    </AssignCellModal>
                                 </div>
                             </div>
                         </AccordionTrigger>
