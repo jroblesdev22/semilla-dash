@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { randomUUID } from "crypto"
+import type { Prisma } from '@prisma/client'
+
+// Type for cell with included relations
+type CellWithRelations = Prisma.CellGetPayload<{
+  include: {
+    course: true,
+    cell_members: {
+      include: {
+        user: true
+      }
+    }
+  }
+}>
 
 export async function GET() {
   try {
@@ -18,7 +31,7 @@ export async function GET() {
       }
     })
 
-    const cellsWithMembers = cells.map(cell => ({
+    const cellsWithMembers = cells.map((cell: CellWithRelations) => ({
       id: cell.id,
       name: cell.name,
       course_id: cell.course_id,
@@ -29,7 +42,7 @@ export async function GET() {
         name: cell.course.name,
         color_hex: cell.course.color_hex
       },
-      members: cell.cell_members.map(member => ({
+      members: cell.cell_members.map((member) => ({
         id: member.user.id,
         name: member.user.name || 'Sin nombre',
         email: member.user.email,
@@ -133,7 +146,7 @@ export async function POST(request: Request) {
         name: cellWithMembers!.course.name,
         color_hex: cellWithMembers!.course.color_hex
       },
-      members: cellWithMembers!.cell_members.map(member => ({
+      members: cellWithMembers!.cell_members.map((member) => ({
         id: member.user.id,
         name: member.user.name || 'Sin nombre',
         email: member.user.email,
