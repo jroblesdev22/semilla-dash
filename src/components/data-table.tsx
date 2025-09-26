@@ -92,6 +92,7 @@ import {
 
 export const schema = z.object({
   id: z.string(),
+  classroomUserId: z.string(),
   name: z.string(),
   email: z.string(),
   courseId: z.string(),

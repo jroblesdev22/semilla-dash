@@ -32,6 +32,7 @@ export async function GET() {
       id: teacher.id,
       name: teacher.name || 'Sin nombre',
       email: teacher.email,
+      classroomUserId: teacher.classroomUserId,
       whatsapp_phone: teacher.whatsapp_phone,
       cells: teacher.cell_members.map(member => ({
         id: member.cell.id,
@@ -48,6 +49,7 @@ export async function GET() {
           id: cellMember.user.id,
           name: cellMember.user.name || 'Sin nombre',
           email: cellMember.user.email,
+          classroomUserId: cellMember.user.classroomUserId,
           role: cellMember.user.role,
           joined_at: cellMember.joined_at
         }))

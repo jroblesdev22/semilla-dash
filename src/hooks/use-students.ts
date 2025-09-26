@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 
 interface StudentData {
   id: string
+  classroomUserId: string
   name: string
   email: string
   courseId: string

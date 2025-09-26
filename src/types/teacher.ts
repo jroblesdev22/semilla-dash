@@ -7,6 +7,7 @@ export interface Teacher {
   id: string
   name: string
   email: string | null
+  classroomUserId: string | null
   whatsapp_phone: string | null
   cells: TeacherCell[]
 }

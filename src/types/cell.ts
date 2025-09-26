@@ -16,6 +16,7 @@ export interface CellMember {
   id: string
   name: string
   email: string | null
+  classroomUserId: string | null
   role: string
   joined_at: Date | null
 }

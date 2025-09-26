@@ -69,19 +69,32 @@ export default function Page() {
     fetchCoursesFromDB()
   }, [])
 
-  // Filter students by selected professor
+  // Filter students by selected professor based on cell membership
   const filteredStudents = selectedProfessor 
-    ? students.filter(student => student.teacherId === selectedProfessor)
+    ? students.filter(student => {
+        // Find the selected teacher in the database
+        const selectedTeacher = teachers.find(t => t.id === selectedProfessor)
+        if (!selectedTeacher) return false
+        
+        // Get all cells where this teacher is a member
+        const teacherCells = selectedTeacher.cells || []
+        
+        // Check if the student is a member of any of the teacher's cells
+        // Match by classroomUserId between student data and cell members
+        return teacherCells.some(cell => 
+          cell.members.some(member => 
+            member.role === 'student' && 
+            member.classroomUserId === student.classroomUserId
+          )
+        )
+      })
     : students
 
-  // Create professor list for selector from unique teachers in student data
-  const professorsFromStudents = Array.from(
-    new Map(
-      students
-        .filter(student => student.teacherId && student.teacherName)
-        .map(student => [student.teacherId!, { id: student.teacherId!, name: student.teacherName! }])
-    ).values()
-  )
+  // Create professor list for selector from database teachers
+  const professorsForFilter = teachers.map(teacher => ({
+    id: teacher.id,
+    name: teacher.name
+  }))
 
   return (
     <SidebarProvider
@@ -126,7 +139,7 @@ export default function Page() {
                   courses={courses}
                   selectedCourseId={selectedCourseId}
                   onCourseChange={setSelectedCourseId}
-                  professors={professorsFromStudents}
+                  professors={professorsForFilter}
                   selectedProfessor={selectedProfessor}
                   onProfessorChange={setSelectedProfessor}
                 />

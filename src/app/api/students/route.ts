@@ -56,6 +56,7 @@ async function getCourseTeacher(
 
 interface StudentStats {
   id: string
+  classroomUserId: string
   name: string
   email: string
   courseId: string
@@ -302,6 +303,7 @@ async function getStudentStats(
 
     const result = {
       id: `${student.userId || 'unknown'}-${courseId}`, // ID único combinando student y course
+      classroomUserId: student.userId || '',
       name: student.profile?.name?.fullName || 'Unknown Student',
       email: student.profile?.emailAddress || '',
       courseId: courseId,
@@ -322,6 +324,7 @@ async function getStudentStats(
     // Return default stats in case of error
     const errorResult = {
       id: `${student.userId || 'unknown'}-${courseId}`, // ID único combinando student y course
+      classroomUserId: student.userId || '',
       name: student.profile?.name?.fullName || 'Unknown Student',
       email: student.profile?.emailAddress || '',
       courseId: courseId,
