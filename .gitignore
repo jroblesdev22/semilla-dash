@@ -40,5 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# prisma generated client
-src/generated/
+# prisma generated client (now using default location in node_modules)
+# node_modules/.prisma/ is already ignored by /node_modules
