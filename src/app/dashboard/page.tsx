@@ -16,9 +16,15 @@ import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
 import { ListTeachers } from "@/components/list-teachers"
 
+interface Course {
+  id: string
+  name: string
+  color_hex: string
+}
+
 export default function Page() {
   const [selectedCourseId, setSelectedCourseId] = useState<string | undefined>()
-  const [dbCourses, setDbCourses] = useState<any[]>([])
+  const [dbCourses, setDbCourses] = useState<Course[]>([])
   const [coursesLoading, setCoursesLoading] = useState(false)
   const [syncLoading, setSyncLoading] = useState(false)
   const { students, courses, loading, error, refetch } = useStudents(selectedCourseId)

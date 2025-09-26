@@ -257,7 +257,8 @@ async function getStudentStats(
     }    
     return result
   } catch (error) {
-    
+    console.error('Error calculating student stats:', error)
+
     // Return default stats in case of error
     const errorResult = {
       id: `${student.userId || 'unknown'}-${courseId}`, // ID único combinando student y course
