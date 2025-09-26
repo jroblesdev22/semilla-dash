@@ -10,159 +10,160 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { IconPlus } from "@tabler/icons-react"
-import { LuTrash2, LuPencil, LuPlus } from "react-icons/lu";
+import { LuTrash2, LuPencil, LuPlus, LuRefreshCw } from "react-icons/lu"
+import { useTeachers } from "@/hooks/use-teachers"
+import { Teacher } from "@/types/teacher"
 
 
 export function ListTeachers() {
+    const { teachers, loading, error, syncTeachers, syncing } = useTeachers()
+
+    const handleSync = async () => {
+        try {
+            const result = await syncTeachers()
+            alert(`✅ ${result.message}\n\nNuevos profesores: ${result.newTeachers}\nTotal procesados: ${result.totalTeachers}`)
+        } catch (error) {
+            alert(`❌ Error al sincronizar: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+        }
+    }
+
+    if (loading) {
+        return (
+            <div className="px-4 lg:px-6 py-8 text-center">
+                <p>Cargando profesores...</p>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="px-4 lg:px-6 py-8 text-center text-red-500">
+                <p>Error: {error}</p>
+            </div>
+        )
+    }
+
+    if (teachers.length === 0) {
+        return (
+            <div className="px-4 lg:px-6 py-8 text-center">
+                <p>No se encontraron profesores</p>
+                <div className="px-4 lg:px-6 mb-4 flex justify-end">
+                <Button
+                    onClick={handleSync}
+                    disabled={syncing}
+                    variant="outline"
+                    className="gap-2"
+                >
+                    <LuRefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                    {syncing ? 'Sincronizando...' : 'Sincronizar Profesores'}
+                </Button>
+            </div>
+            </div>
+        )
+    }
+
     return (
         <>
+            <div className="px-4 lg:px-6 mb-4 flex justify-end">
+                <Button
+                    onClick={handleSync}
+                    disabled={syncing}
+                    variant="outline"
+                    className="gap-2"
+                >
+                    <LuRefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                    {syncing ? 'Sincronizando...' : 'Sincronizar Profesores'}
+                </Button>
+            </div>
             <Accordion
                 type="single"
                 collapsible
                 className="px-4 lg:px-6"
-                defaultValue="item-1"
+                defaultValue={teachers.length > 0 ? `teacher-${teachers[0].id}` : undefined}
             >
-                <AccordionItem value="item-1" className="w-full">
-                    <AccordionTrigger className="flex w-full items-center justify-between [&>*]:no-underline [&_*]:no-underline [&]:hover:no-underline cursor-pointer">
-                        <div className="flex items-center gap-4">
-                            <span className="text-left">Juan Ignacio Gomez Perez</span>
-                            <div className="flex items-center gap-2 [&_*]:no-underline hover:[&_*]:no-underline">
-                                <Badge className="hover:no-underline bg-amber-500">Celula 1</Badge>
-                                <Badge className="hover:no-underline bg-green-500">Celula 2</Badge>
-                                <Badge className="hover:no-underline bg-amber-500">Celula 3</Badge>
-                                <Badge className="hover:no-underline bg-green-500">Celula 4</Badge>
-                                <div
-                                    className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground px-2 h-7 cursor-pointer shrink-0"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        // Aquí irá la lógica para abrir el formulario
-                                        console.log('Agregar nueva célula');
-                                    }}
-                                >
-                                    <IconPlus className="h-4 w-4" />
-                                    <span className="text-xs">Agregar Celula</span>
+                {teachers.map((teacher, index) => (
+                    <AccordionItem key={teacher.id} value={`teacher-${teacher.id}`} className="w-full">
+                        <AccordionTrigger className="flex w-full items-center justify-between [&>*]:no-underline [&_*]:no-underline [&]:hover:no-underline cursor-pointer">
+                            <div className="flex items-center gap-4">
+                                <span className="text-left">{teacher.name}</span>
+                                <div className="flex items-center gap-2 [&_*]:no-underline hover:[&_*]:no-underline">
+                                    {teacher.cells.map((cell) => (
+                                        <Badge
+                                            key={cell.id}
+                                            className="hover:no-underline"
+                                            style={{ backgroundColor: cell.course.color_hex }}
+                                        >
+                                            {cell.name}
+                                        </Badge>
+                                    ))}
+                                    <div
+                                        className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground px-2 h-7 cursor-pointer shrink-0"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            console.log('Agregar nueva célula para', teacher.name);
+                                        }}
+                                    >
+                                        <IconPlus className="h-4 w-4" />
+                                        <span className="text-xs">Agregar Celula</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="flex flex-col gap-4 text-balance">
-                        <div className="relative px-12">
-                            <Carousel
-                                opts={{
-                                    align: "start",
-                                }}
-                                className="w-full"
-                            >
-                                <CarouselContent>
-                                    {Array.from({ length: 5 }).map((_, index) => (
-                                        <CarouselItem key={index} className="md:basis-32 lg:basis-64">
-                                            <div className="p-1">
-                                                <Card>
-                                                    <CardContent className="flex flex-col gap-2">
-                                                        <span className="text-3xl font-semibold">Celula {index + 1}</span>
-                                                        <p>Profesor Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            <Button variant="destructive" size="icon">
-                                                                <LuTrash2 />
-                                                            </Button>
-                                                            <Button variant="outline" size="icon">
-                                                                <LuPencil />
-                                                            </Button>
-                                                            <Button variant="outline" size="icon">
-                                                                <LuPlus />
-                                                            </Button>
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-                                            </div>
-                                        </CarouselItem>
-                                    ))}
-                                </CarouselContent>
-                                <CarouselPrevious className="left-0" />
-                                <CarouselNext className="right-0" />
-                            </Carousel>
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-2">
-                    <AccordionTrigger className="flex w-full items-center justify-between [&>*]:no-underline [&_*]:no-underline [&]:hover:no-underline cursor-pointer">
-                        <div className="flex items-center gap-4">
-                            <span className="text-left">Jose Maria Santiago Monte</span>
-                            <div className="flex items-center gap-2 [&_*]:no-underline hover:[&_*]:no-underline">
-                                <Badge className="hover:no-underline bg-green-500">Celula 5</Badge>
-                                <Badge className="hover:no-underline bg-amber-500">Celula 6</Badge>
-                                <Badge className="hover:no-underline bg-green-500">Celula 7</Badge>
-                                <Badge className="hover:no-underline bg-amber-500">Celula 8</Badge>
-                                <div
-                                    className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-7 w-7 cursor-pointer shrink-0"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        // Aquí irá la lógica para abrir el formulario
-                                        console.log('Agregar nueva célula');
-                                    }}
-                                >
-                                    <IconPlus className="h-4 w-4" />
-                                </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="flex flex-col gap-4 text-balance">
+                            <div className="relative px-12">
+                                {teacher.cells.length > 0 ? (
+                                    <Carousel
+                                        opts={{
+                                            align: "start",
+                                        }}
+                                        className="w-full"
+                                    >
+                                        <CarouselContent>
+                                            {teacher.cells.map((cell) => (
+                                                <CarouselItem key={cell.id} className="md:basis-32 lg:basis-64">
+                                                    <div className="p-1">
+                                                        <Card>
+                                                            <CardContent className="flex flex-col gap-2">
+                                                                <span className="text-3xl font-semibold">{cell.name}</span>
+                                                                <p className="text-sm text-muted-foreground">
+                                                                    Curso: {cell.course.name}
+                                                                </p>
+                                                                <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+                                                                    {cell.members.map((member) => (
+                                                                        <p key={member.id} className={member.role === 'teacher' ? 'font-semibold' : ''}>
+                                                                            {member.name} {member.role === 'teacher' && '(Profesor)'}
+                                                                        </p>
+                                                                    ))}
+                                                                </div>
+                                                                <div className="flex items-center justify-end gap-2 mt-2">
+                                                                    <Button variant="destructive" size="icon">
+                                                                        <LuTrash2 />
+                                                                    </Button>
+                                                                    <Button variant="outline" size="icon">
+                                                                        <LuPencil />
+                                                                    </Button>
+                                                                    <Button variant="outline" size="icon">
+                                                                        <LuPlus />
+                                                                    </Button>
+                                                                </div>
+                                                            </CardContent>
+                                                        </Card>
+                                                    </div>
+                                                </CarouselItem>
+                                            ))}
+                                        </CarouselContent>
+                                        <CarouselPrevious className="left-0" />
+                                        <CarouselNext className="right-0" />
+                                    </Carousel>
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <p>Este profesor no tiene células asignadas</p>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="flex flex-col gap-4 text-balance">
-                        <div className="relative px-12">
-                            <Carousel
-                                opts={{
-                                    align: "start",
-                                }}
-                                className="w-full"
-                            >
-                                <CarouselContent>
-                                    {Array.from({ length: 5 }).map((_, index) => (
-                                        <CarouselItem key={index} className="md:basis-32 lg:basis-64">
-                                            <div className="p-1">
-                                                <Card>
-                                                    <CardContent className="flex flex-col gap-2">
-                                                        <span className="text-3xl font-semibold">Celula {index + 1}</span>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <p>Estudiante Apellido</p>
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            <Button variant="destructive" size="icon">
-                                                                <LuTrash2 />
-                                                            </Button>
-                                                            <Button variant="outline" size="icon">
-                                                                <LuPencil />
-                                                            </Button>
-                                                            <Button variant="outline" size="icon">
-                                                                <LuPlus />
-                                                            </Button>
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-                                            </div>
-                                        </CarouselItem>
-                                    ))}
-                                </CarouselContent>
-                                <CarouselPrevious className="left-0" />
-                                <CarouselNext className="right-0" />
-                            </Carousel>
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
+                        </AccordionContent>
+                    </AccordionItem>
+                ))}
             </Accordion>
         </>
     )

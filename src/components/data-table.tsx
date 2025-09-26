@@ -45,7 +45,7 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 // import { toast } from "sonner" // Removed - not used
 import { z } from "zod"
 
@@ -136,37 +136,6 @@ function DragHandle({ id }: { id: string }) {
 
 const columns: ColumnDef<z.infer<typeof schema>>[] = [
   {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
-  {
-    id: "select",
-    header: ({ table }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
     accessorKey: "name",
     header: "Nombre del Alumno",
     cell: ({ row }) => {
@@ -227,30 +196,6 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           {row.original.devueltaCalificada}
         </Badge>
       </div>
-    ),
-  },
-  {
-    id: "actions",
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-            size="icon"
-          >
-            <IconDotsVertical />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem>Ver detalles</DropdownMenuItem>
-          <DropdownMenuItem>Enviar recordatorio</DropdownMenuItem>
-          <DropdownMenuItem>Ver historial</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Exportar datos</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     ),
   },
 ]
@@ -645,43 +590,69 @@ function StudentDetailsViewer({ item }: { item: z.infer<typeof schema> }) {
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+          {/* Mostrar información básica primero */}
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label className="font-medium">Nombre</Label>
+                <div className="text-muted-foreground">{item.name}</div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="font-medium">Email</Label>
+                <div className="text-muted-foreground text-xs break-all">{item.email}</div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="font-medium">Curso</Label>
+                <div className="text-muted-foreground">{item.courseName}</div>
+              </div>
+            </div>
+          </div>
+          
           {!isMobile && (
             <>
+              <Separator />
               <ChartContainer config={chartConfig}>
-                <AreaChart
+                <BarChart
                   accessibilityLayer
                   data={[
                     { category: "Asignada", value: item.asignada },
                     { category: "Entregada", value: item.entregada },
-                    { category: "Entregada con Retraso", value: item.entregadaConRetraso },
+                    { category: "Retrasada", value: item.entregadaConRetraso },
                     { category: "Sin Entregar", value: item.sinEntregar },
-                    { category: "Devuelta (Calificada)", value: item.devueltaCalificada },
+                    { category: "Calificada", value: item.devueltaCalificada },
                   ]}
                   margin={{
-                    left: 0,
+                    left: 20,
                     right: 10,
+                    top: 10,
+                    bottom: 20,
                   }}
                 >
-                  <CartesianGrid vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     dataKey="category"
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
                   />
                   <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="dot" />}
+                    cursor={{ fill: "rgba(0, 0, 0, 0.1)" }}
+                    content={<ChartTooltipContent />}
                   />
-                  <Area
+                  <Bar
                     dataKey="value"
-                    type="natural"
                     fill="var(--color-desktop)"
-                    fillOpacity={0.4}
-                    stroke="var(--color-desktop)"
-                    stackId="a"
+                    radius={[4, 4, 0, 0]}
                   />
-                </AreaChart>
+                </BarChart>
               </ChartContainer>
               <Separator />
               <div className="grid gap-2">
@@ -696,20 +667,12 @@ function StudentDetailsViewer({ item }: { item: z.infer<typeof schema> }) {
               <Separator />
             </>
           )}
+          
+          {/* Estadísticas de tareas */}
           <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
-                <Label className="font-medium">Nombre</Label>
-                <div className="text-muted-foreground">{item.name}</div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label className="font-medium">Email</Label>
-                <div className="text-muted-foreground">{item.email}</div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label className="font-medium">Curso</Label>
-              <div className="text-muted-foreground">{item.courseName}</div>
+            <div className="flex items-center gap-2">
+              <Label className="font-medium text-base">Estadísticas de Tareas</Label>
+              <IconTrendingUp className="size-4" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">

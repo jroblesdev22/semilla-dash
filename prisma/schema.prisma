@@ -16,11 +16,14 @@ model User {
   emailVerified DateTime?
   // Numero de WhatsApp del usuario
   whatsapp_phone String?
-  
+  // ID del usuario en Google Classroom
+  classroomUserId String? @unique
+
   // Relations
   cell_members CellMember[]
 
   @@index([email])
+  @@index([classroomUserId])
 }
 
 model Course {
