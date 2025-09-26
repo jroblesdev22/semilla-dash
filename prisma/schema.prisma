@@ -1,0 +1,68 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+  output          = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id
+  name          String?
+  email         String?  @unique
+  emailVerified DateTime?
+  // Numero de WhatsApp del usuario
+  whatsapp_phone String?
+  
+  // Relations
+  cell_members CellMember[]
+
+  @@index([email])
+}
+
+model Course {
+  id       String @id
+  // Nombre del curso
+  name     String
+  // Color en formato hexadecimal
+  color_hex String
+  
+  // Relations
+  cells    Cell[]
+}
+
+model Cell {
+  id         String   @id
+  // Nombre de la celula
+  name       String
+  course_id  String
+  created_at DateTime?
+  updated_at DateTime?
+  
+  // Relations
+  course       Course       @relation(fields: [course_id], references: [id])
+  cell_members CellMember[]
+
+  @@index([course_id])
+}
+
+model CellMember {
+  id        String   @id
+  cell_id   String
+  user_id   String
+  // student o teacher
+  role      String
+  joined_at DateTime?
+  
+  // Relations
+  cell Cell @relation(fields: [cell_id], references: [id])
+  user User @relation(fields: [user_id], references: [id])
+
+  @@unique([cell_id, user_id])
+  @@index([cell_id])
+  @@index([user_id]) 
+  @@index([role])
+}
