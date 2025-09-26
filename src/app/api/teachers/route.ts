@@ -8,17 +8,10 @@ export async function GET() {
   try {
     const teachers = await db.user.findMany({
       where: {
-        cell_members: {
-          some: {
-            role: "teacher"
-          }
-        }
+        role: "teacher"
       },
       include: {
         cell_members: {
-          where: {
-            role: "teacher"
-          },
           include: {
             cell: {
               include: {
@@ -53,7 +46,7 @@ export async function GET() {
           id: cellMember.user.id,
           name: cellMember.user.name || 'Sin nombre',
           email: cellMember.user.email,
-          role: cellMember.role,
+          role: cellMember.user.role,
           joined_at: cellMember.joined_at
         }))
       }))
@@ -110,6 +103,7 @@ export async function POST() {
     let totalTeachers = 0
     const newTeachers = []
 
+
     // For each course, get teachers from Google Classroom
     for (const course of courses) {
       if (!course.classroomId) continue
@@ -144,18 +138,24 @@ export async function POST() {
           console.log(`Email: ${teacher.profile?.emailAddress}`)
           console.log(`Full Name: ${teacher.profile?.name?.fullName}`)
 
-          if (!teacher.profile?.id || !teacher.profile?.emailAddress) {
-            console.log(`❌ Skipping teacher - missing profile ID or email`)
+          if (!teacher.profile?.id) {
+            console.log(`❌ Skipping teacher - missing profile ID`)
             continue
           }
 
           // Check if teacher already exists in database
+          const whereConditions: Array<{ classroomUserId?: string; email?: string }> = [
+            { classroomUserId: teacher.profile.id }
+          ]
+
+          // Only add email condition if email is available
+          if (teacher.profile.emailAddress) {
+            whereConditions.push({ email: teacher.profile.emailAddress })
+          }
+
           const existingTeacher = await db.user.findFirst({
             where: {
-              OR: [
-                { classroomUserId: teacher.profile.id },
-                { email: teacher.profile.emailAddress }
-              ]
+              OR: whereConditions
             }
           })
 
@@ -174,28 +174,29 @@ export async function POST() {
               data: {
                 id: randomUUID(),
                 name: teacher.profile.name?.fullName || 'Sin nombre',
-                email: teacher.profile.emailAddress,
+                email: teacher.profile.emailAddress || null,
                 classroomUserId: teacher.profile.id,
-                emailVerified: new Date()
+                role: "teacher",
+                emailVerified: teacher.profile.emailAddress ? new Date() : null
               }
             })
 
             console.log(`Created teacher:`, newTeacher)
             newTeachers.push(newTeacher)
             syncedTeachers++
-          } else if (!existingTeacher.classroomUserId) {
-            console.log(`🔄 Updating existing teacher with classroom ID: ${existingTeacher.name}`)
+          } else {
+            console.log(`🔄 Updating existing user to teacher role: ${existingTeacher.name}`)
 
-            // Update existing teacher with classroom ID
+            // Update existing user to teacher role and add classroom ID if missing
             await db.user.update({
               where: { id: existingTeacher.id },
               data: {
                 classroomUserId: teacher.profile.id,
-                name: teacher.profile.name?.fullName || existingTeacher.name
+                name: teacher.profile.name?.fullName || existingTeacher.name,
+                role: "teacher"
               }
             })
-          } else {
-            console.log(`ℹ️ Teacher already exists and has classroom ID: ${existingTeacher.name}`)
+            syncedTeachers++
           }
         }
       } catch (courseError) {

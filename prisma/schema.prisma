@@ -18,12 +18,15 @@ model User {
   whatsapp_phone String?
   // ID del usuario en Google Classroom
   classroomUserId String? @unique
+  // Rol del usuario: student o teacher
+  role          String   @default("student")
 
   // Relations
   cell_members CellMember[]
 
   @@index([email])
   @@index([classroomUserId])
+  @@index([role])
 }
 
 model Course {
@@ -68,16 +71,13 @@ model CellMember {
   id        String   @id
   cell_id   String
   user_id   String
-  // student o teacher
-  role      String
   joined_at DateTime?
-  
+
   // Relations
   cell Cell @relation(fields: [cell_id], references: [id])
   user User @relation(fields: [user_id], references: [id])
 
   @@unique([cell_id, user_id])
   @@index([cell_id])
-  @@index([user_id]) 
-  @@index([role])
+  @@index([user_id])
 }
