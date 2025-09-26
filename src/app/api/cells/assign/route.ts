@@ -4,25 +4,73 @@ import { randomUUID } from "crypto"
 
 export async function POST(request: Request) {
   try {
-    const { user_id, cell_id } = await request.json()
+    const { user_id, classroomUserId, name, email, cell_id } = await request.json()
+    
+    // Debug logging
+    console.log('POST /api/cells/assign - Received data:', { user_id, classroomUserId, name, email, cell_id })
 
-    // Validar datos requeridos
-    if (!user_id || !cell_id) {
+    // Validate required cell_id first
+    if (!cell_id) {
       return NextResponse.json(
-        { error: "user_id and cell_id are required" },
+        { error: "cell_id is required" },
         { status: 400 }
       )
     }
 
-    // Verificar que el usuario existe
-    const user = await db.user.findUnique({
-      where: { id: user_id }
-    })
+    // Support both old format (user_id) and new format (classroomUserId + user details)
+    let user;
+    let userId: string;
 
-    if (!user) {
+    if (user_id) {
+      // Legacy format - user already exists in DB
+      user = await db.user.findUnique({
+        where: { id: user_id }
+      })
+
+      if (!user) {
+        return NextResponse.json(
+          { error: "User not found" },
+          { status: 404 }
+        )
+      }
+      userId = user_id;
+    } else if (classroomUserId && name) {
+      // New format - create or update user from Google Classroom data
+      // Note: email can be empty string, so we don't require it to be truthy
+
+      // Try to find existing user by classroomUserId
+      user = await db.user.findUnique({
+        where: { classroomUserId }
+      })
+
+      if (!user) {
+        // Create new user with Google Classroom data
+        const newUserId = randomUUID()
+        user = await db.user.create({
+          data: {
+            id: newUserId,
+            name,
+            email,
+            classroomUserId,
+            role: "student"
+          }
+        })
+        userId = newUserId
+      } else {
+        // Update existing user data (in case it changed in Google Classroom)
+        user = await db.user.update({
+          where: { classroomUserId },
+          data: {
+            name,
+            email
+          }
+        })
+        userId = user.id
+      }
+    } else {
       return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
+        { error: "Either user_id or (classroomUserId and name) are required" },
+        { status: 400 }
       )
     }
 
@@ -46,7 +94,7 @@ export async function POST(request: Request) {
       where: {
         cell_id_user_id: {
           cell_id: cell_id,
-          user_id: user_id
+          user_id: userId
         }
       }
     })
@@ -63,7 +111,7 @@ export async function POST(request: Request) {
       data: {
         id: randomUUID(),
         cell_id: cell_id,
-        user_id: user_id,
+        user_id: userId,
         joined_at: new Date()
       }
     })

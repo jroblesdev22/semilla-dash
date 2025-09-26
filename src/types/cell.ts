@@ -28,7 +28,10 @@ export interface CreateCellRequest {
 }
 
 export interface AssignUserToCellRequest {
-  user_id: string
+  user_id?: string // Legacy format
+  classroomUserId?: string // New format
+  name?: string // New format
+  email?: string | null // New format - can be null if student has no email
   cell_id: string
 }
 
@@ -71,6 +74,7 @@ export interface DeleteCellResponse {
 
 export interface Student {
   id: string
+  classroomUserId?: string // Google Classroom user ID
   name: string
   email: string | null
   role: string

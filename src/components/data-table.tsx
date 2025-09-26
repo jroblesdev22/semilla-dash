@@ -304,20 +304,10 @@ export function DataTable({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="outline">Estudiantes</SelectItem>
-            <SelectItem value="past-performance">Por Curso</SelectItem>
-            <SelectItem value="key-personnel">Estadísticas</SelectItem>
-            <SelectItem value="focus-documents">Reportes</SelectItem>
           </SelectContent>
         </Select>
         <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
           <TabsTrigger value="outline">Estudiantes</TabsTrigger>
-          <TabsTrigger value="past-performance">
-            Por Curso <Badge variant="secondary">{data.length > 0 ? new Set(data.map(s => s.courseId)).size : 0}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="key-personnel">
-            Estadísticas <Badge variant="secondary">{data.length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="focus-documents">Reportes</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Filtro por Cursos */}
@@ -436,7 +426,7 @@ export function DataTable({
           <div className="flex w-full items-center gap-8 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
               <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                Rows per page
+                filas por pagina
               </Label>
               <Select
                 value={`${table.getState().pagination.pageSize}`}
@@ -459,7 +449,7 @@ export function DataTable({
               </Select>
             </div>
             <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              Pagina {table.getState().pagination.pageIndex + 1} de{" "}
               {table.getPageCount()}
             </div>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">

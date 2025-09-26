@@ -13,6 +13,7 @@ import { IconPlus } from "@tabler/icons-react"
 import { LuTrash2, LuPencil, LuPlus, LuRefreshCw } from "react-icons/lu"
 import { useTeachers } from "@/hooks/use-teachers"
 import { useCells } from "@/hooks/use-cells"
+import type { Student } from "@/types/cell"
 import { AssignCellModal } from "@/components/assign-cell-modal"
 import { DeleteCellModal } from "@/components/delete-cell-modal"
 import { EditCellModal } from "@/components/edit-cell-modal"
@@ -81,18 +82,20 @@ export function ListTeachers() {
         }
     }
 
-    const handleAddStudents = async (studentIds: string[], cellId: string) => {
+    const handleAddStudents = async (students: Student[], cellId: string) => {
         try {
-            // Add each student to the cell
-            const promises = studentIds.map(studentId =>
+            // Add each student to the cell using Google Classroom data
+            const promises = students.map(student =>
                 assignUserToCell({
-                    user_id: studentId,
+                    classroomUserId: student.classroomUserId || student.id,
+                    name: student.name,
+                    email: student.email || null,
                     cell_id: cellId
                 })
             )
 
             await Promise.all(promises)
-            alert(`✅ ${studentIds.length} estudiante${studentIds.length > 1 ? 's' : ''} agregado${studentIds.length > 1 ? 's' : ''} a la célula exitosamente`)
+            alert(`✅ ${students.length} estudiante${students.length > 1 ? 's' : ''} agregado${students.length > 1 ? 's' : ''} a la célula exitosamente`)
             // Refetch teachers to update the UI
             refetchTeachers()
         } catch (error) {
@@ -237,7 +240,7 @@ export function ListTeachers() {
                                                                     </EditCellModal>
                                                                     <AddStudentsModal
                                                                         cell={cell}
-                                                                        onAddStudents={(studentIds) => handleAddStudents(studentIds, cell.id)}
+                                                                        onAddStudents={(students) => handleAddStudents(students, cell.id)}
                                                                         getStudentsByCourse={getStudentsByCourse}
                                                                         processing={assigning}
                                                                     >

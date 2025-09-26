@@ -20,7 +20,7 @@ import { Loader2, Users, GraduationCap } from "lucide-react"
 interface AddStudentsModalProps {
   children: React.ReactNode
   cell: Cell
-  onAddStudents: (studentIds: string[]) => Promise<void>
+  onAddStudents: (students: Student[]) => Promise<void>
   getStudentsByCourse: (courseId: string) => Promise<StudentsByCourseResponse>
   processing: boolean
 }
@@ -76,7 +76,11 @@ export function AddStudentsModal({
     if (selectedStudentIds.length === 0) return
 
     try {
-      await onAddStudents(selectedStudentIds)
+      // Get the selected student objects
+      const selectedStudents = students.filter(student => 
+        selectedStudentIds.includes(student.id)
+      )
+      await onAddStudents(selectedStudents)
       handleClose()
     } catch {
       // Error handling is done in parent component
