@@ -10,15 +10,55 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { useStudents } from "@/hooks/use-students"
-import { Loader2, AlertCircle, Plus } from "lucide-react"
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ListTeachers } from "@/components/list-teachers"
 
 export default function Page() {
   const [selectedCourseId, setSelectedCourseId] = useState<string | undefined>()
+  const [dbCourses, setDbCourses] = useState<any[]>([])
+  const [coursesLoading, setCoursesLoading] = useState(false)
+  const [syncLoading, setSyncLoading] = useState(false)
   const { students, courses, loading, error, refetch } = useStudents(selectedCourseId)
+
+  const fetchCoursesFromDB = async () => {
+    setCoursesLoading(true)
+    try {
+      const response = await fetch('/api/courses')
+      const data = await response.json()
+      setDbCourses(data.courses || [])
+    } catch (error) {
+      console.error('Error fetching courses:', error)
+    } finally {
+      setCoursesLoading(false)
+    }
+  }
+
+  const syncCourses = async () => {
+    setSyncLoading(true)
+    try {
+      const response = await fetch('/api/courses', { method: 'POST' })
+      const data = await response.json()
+
+      if (response.ok) {
+        console.log(data.message)
+        await fetchCoursesFromDB() // Refresh courses list
+      } else {
+        console.error('Error syncing courses:', data.error)
+      }
+    } catch (error) {
+      console.error('Error syncing courses:', error)
+    } finally {
+      setSyncLoading(false)
+    }
+  }
+
+  // Fetch courses on component mount
+  useEffect(() => {
+    fetchCoursesFromDB()
+  }, [])
 
   return (
     <SidebarProvider
@@ -71,18 +111,37 @@ export default function Page() {
               <h2 className="px-4 lg:px-6 text-2xl font-bold">Listado de profesores</h2>
               {/* colocar cuadro de color junto a nombre del curso entonces iria [color] nombre del curso */}
               <div className="flex flex-row gap-2 px-4 lg:px-6">
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 rounded-sm bg-amber-500" />
-                  <span className="text-base font-semibold">Marketing Digital</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 rounded-sm bg-green-500" />
-                  <span className="text-base font-semibold">E-commerce</span>
-                </div>
-                <Button variant="outline" size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Agregar Curso
-                </Button>
+                {coursesLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-base">Cargando cursos...</span>
+                  </div>
+                ) : (
+                  <>
+                    {dbCourses.map((course) => (
+                      <div key={course.id} className="flex items-center gap-2">
+                        <div
+                          className="h-4 w-4 rounded-sm"
+                          style={{ backgroundColor: course.color_hex }}
+                        />
+                        <span className="text-base font-semibold">{course.name}</span>
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={syncCourses}
+                      disabled={syncLoading}
+                    >
+                      {syncLoading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                      )}
+                      {syncLoading ? 'Sincronizando...' : 'Sincronizar Cursos'}
+                    </Button>
+                  </>
+                )}
               </div>
               <ListTeachers />
             </div>
