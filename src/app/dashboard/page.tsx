@@ -10,7 +10,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { useStudents } from "@/hooks/use-students"
-import { Loader2, AlertCircle } from "lucide-react"
+import { Loader2, AlertCircle, Plus } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -79,6 +79,10 @@ export default function Page() {
                   <div className="h-4 w-4 rounded-sm bg-green-500" />
                   <span className="text-base font-semibold">E-commerce</span>
                 </div>
+                <Button variant="outline" size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Agregar Curso
+                </Button>
               </div>
               <ListTeachers />
             </div>

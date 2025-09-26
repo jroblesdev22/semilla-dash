@@ -32,7 +32,7 @@ export function ListTeachers() {
                                 <Badge className="hover:no-underline bg-amber-500">Celula 3</Badge>
                                 <Badge className="hover:no-underline bg-green-500">Celula 4</Badge>
                                 <div
-                                    className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-7 w-7 cursor-pointer shrink-0"
+                                    className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground px-2 h-7 cursor-pointer shrink-0"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         // Aquí irá la lógica para abrir el formulario
@@ -40,6 +40,7 @@ export function ListTeachers() {
                                     }}
                                 >
                                     <IconPlus className="h-4 w-4" />
+                                    <span className="text-xs">Agregar Celula</span>
                                 </div>
                             </div>
                         </div>
@@ -73,10 +74,10 @@ export function ListTeachers() {
                                                             <Button variant="destructive" size="icon">
                                                                 <LuTrash2 />
                                                             </Button>
-                                                            <Button size="icon">
+                                                            <Button variant="outline" size="icon">
                                                                 <LuPencil />
                                                             </Button>
-                                                            <Button size="icon">
+                                                            <Button variant="outline" size="icon">
                                                                 <LuPlus />
                                                             </Button>
                                                         </div>
