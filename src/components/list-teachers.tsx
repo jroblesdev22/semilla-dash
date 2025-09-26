@@ -59,7 +59,7 @@ export function ListTeachers() {
                                                 <Card>
                                                     <CardContent className="flex flex-col gap-2">
                                                         <span className="text-3xl font-semibold">Celula {index + 1}</span>
-                                                        <p>Estudiante Apellido</p>
+                                                        <p>Profesor Apellido</p>
                                                         <p>Estudiante Apellido</p>
                                                         <p>Estudiante Apellido</p>
                                                         <p>Estudiante Apellido</p>
